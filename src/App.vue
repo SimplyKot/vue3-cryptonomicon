@@ -1,6 +1,7 @@
 <template>
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
     <div
+      v-if="spinner"
       class="
         fixed
         w-100
@@ -293,9 +294,14 @@ export default {
     return {
       ticker: "",
       tickers: [],
+      tickersList: [],
       sel: null,
+      spinner: true,
       graph: [],
     };
+  },
+  created: function () {
+    this.getTickers();
   },
   methods: {
     add() {
@@ -306,7 +312,6 @@ export default {
           `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=9a54c61b45ac389b252ee8b8eab0a0521930b18780641228922688851af95c78`
         );
         const data = await f.json();
-        console.log(data);
         this.tickers.find((t) => t.name == currentTicker.name).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
         if (this.sel?.name == currentTicker.name) {
@@ -338,6 +343,17 @@ export default {
       }
       console.log(res);
       return res;
+    },
+
+    getTickers() {
+      this.tickersList = fetch(
+        `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+      )
+        .then((res) => res.json())
+        .then((res) => {
+          this.tickersList = res.Data;
+          this.spinner = false;
+        });
     },
   },
 };
