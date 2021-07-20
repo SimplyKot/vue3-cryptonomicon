@@ -48,6 +48,7 @@
             <div class="mt-1 relative rounded-md shadow-md">
               <input
                 v-model="ticker"
+                v-on:keydown="handleInput"
                 v-on:keydown.enter="add"
                 type="text"
                 name="wallet"
@@ -85,54 +86,6 @@
                 "
               >
                 BTC
-              </span>
-              <span
-                class="
-                  inline-flex
-                  items-center
-                  px-2
-                  m-1
-                  rounded-md
-                  text-xs
-                  font-medium
-                  bg-gray-300
-                  text-gray-800
-                  cursor-pointer
-                "
-              >
-                DOGE
-              </span>
-              <span
-                class="
-                  inline-flex
-                  items-center
-                  px-2
-                  m-1
-                  rounded-md
-                  text-xs
-                  font-medium
-                  bg-gray-300
-                  text-gray-800
-                  cursor-pointer
-                "
-              >
-                BCH
-              </span>
-              <span
-                class="
-                  inline-flex
-                  items-center
-                  px-2
-                  m-1
-                  rounded-md
-                  text-xs
-                  font-medium
-                  bg-gray-300
-                  text-gray-800
-                  cursor-pointer
-                "
-              >
-                CHD
               </span>
             </div>
             <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
@@ -294,7 +247,8 @@ export default {
     return {
       ticker: "",
       tickers: [],
-      tickersList: [],
+      tickersList: {},
+      tickersAutocompete: [],
       sel: null,
       spinner: true,
       graph: [],
@@ -345,15 +299,30 @@ export default {
       return res;
     },
 
-    getTickers() {
-      this.tickersList = fetch(
+    async getTickers() {
+      const f = await fetch(
         `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
-      )
-        .then((res) => res.json())
-        .then((res) => {
-          this.tickersList = res.Data;
-          this.spinner = false;
-        });
+      );
+      const data = await f.json();
+      this.tickersList = Array.from(Object.values(data.Data));
+      this.spinner = false;
+    },
+
+    handleInput(e) {
+      // Создаем пустой массив для результатов
+      const autoCompete = [];
+      // Формируем строку для поиска
+      const inputValue = this.ticker + e.key;
+      this.tickersList.forEach((item) => {
+        if (
+          item.Symbol.toUpperCase().includes(inputValue.toUpperCase()) ||
+          item.FullName.toUpperCase().includes(inputValue.toUpperCase())
+        ) {
+          autoCompete.push(item.Symbol.slice(0, 4));
+        }
+      });
+      //console.log(autoCompete);
+      this.tickersAutocompete = autoCompete;
     },
   },
 };
