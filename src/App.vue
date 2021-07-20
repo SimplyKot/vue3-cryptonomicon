@@ -69,9 +69,13 @@
               />
             </div>
             <div
+              v-if="tickersAutocompete.length > 0"
               class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
             >
               <span
+                v-for="a in tickersAutocompete"
+                :key="a"
+                @click="clickAutocomplete(a)"
                 class="
                   inline-flex
                   items-center
@@ -85,10 +89,12 @@
                   cursor-pointer
                 "
               >
-                BTC
+                {{ a }}
               </span>
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div v-if="errorAdded" class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
         <button
@@ -249,6 +255,7 @@ export default {
       tickers: [],
       tickersList: {},
       tickersAutocompete: [],
+      errorAdded: false,
       sel: null,
       spinner: true,
       graph: [],
@@ -259,7 +266,18 @@ export default {
   },
   methods: {
     add() {
-      const currentTicker = { name: this.ticker, price: "-" };
+      const currentTicker = { name: this.ticker.toUpperCase(), price: "-" };
+
+      if (
+        this.tickers.find((t) => {
+          return t.name == currentTicker.name;
+        })
+      ) {
+        //console.log("Уже существует");
+        this.errorAdded = true;
+        return;
+      }
+
       this.tickers.push(currentTicker);
       setInterval(async () => {
         const f = await fetch(
@@ -273,6 +291,7 @@ export default {
         }
       }, 3000);
       this.ticker = "";
+      this.tickersAutocompete = [];
     },
 
     select(ticker) {
@@ -282,6 +301,7 @@ export default {
 
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
+      this.sel = null;
     },
 
     normalizeGraph() {
@@ -295,7 +315,7 @@ export default {
       } else {
         return null;
       }
-      console.log(res);
+      //console.log(res);
       return res;
     },
 
@@ -309,20 +329,45 @@ export default {
     },
 
     handleInput(e) {
+      this.errorAdded = false;
       // Создаем пустой массив для результатов
       const autoCompete = [];
-      // Формируем строку для поиска
-      const inputValue = this.ticker + e.key;
+
+      // Создаем переменну для формирования поисковой строки
+      var inputValue = "";
+
+      if (e.key === "Backspace") {
+        inputValue = this.ticker.slice(0, this.ticker.length - 1);
+      } else {
+        if (e.key.length === 1) {
+          inputValue = this.ticker + e.key;
+        }
+      }
+
+      //console.log("|" + inputValue + "|");
+
       this.tickersList.forEach((item) => {
         if (
           item.Symbol.toUpperCase().includes(inputValue.toUpperCase()) ||
           item.FullName.toUpperCase().includes(inputValue.toUpperCase())
         ) {
-          autoCompete.push(item.Symbol.slice(0, 4));
+          autoCompete.push(item.Symbol);
         }
       });
-      //console.log(autoCompete);
-      this.tickersAutocompete = autoCompete;
+
+      autoCompete.sort();
+      autoCompete.sort((a, b) => {
+        return a.length - b.length;
+      });
+
+      this.tickersAutocompete = autoCompete.slice(0, 4);
+      if (inputValue === "") {
+        this.tickersAutocompete = [];
+      }
+    },
+    clickAutocomplete(a) {
+      this.ticker = a;
+      this.add(a);
     },
   },
 };
