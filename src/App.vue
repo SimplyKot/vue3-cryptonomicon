@@ -70,7 +70,7 @@
             </div>
             <div
               v-if="tickersAutocompete.length > 0"
-              class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
+              class="flex bg-white shadow-md p-1 rounded-md flex-wrap"
             >
               <span
                 v-for="a in tickersAutocompete"
