@@ -289,13 +289,23 @@ export default {
     add() {
       const currentTicker = { name: this.ticker.toUpperCase(), price: "-" };
 
+      // Проверяем, что тикер еще не добпвлен
       if (
         this.tickers.find((t) => {
-          return t.name == currentTicker.name;
+          return t.name === currentTicker.name;
         })
       ) {
         //console.log("Уже существует");
         this.errorAdded = true;
+        return;
+      }
+
+      //Провряем что такая монетка сущствеут в прнципе
+      if (
+        !this.tickersList.find((t) => {
+          return t.Symbol === currentTicker.name;
+        })
+      ) {
         return;
       }
 
@@ -307,6 +317,7 @@ export default {
 
       this.ticker = "";
       this.tickersAutocompete = [];
+      this.errorAdded = false;
     },
 
     select(ticker) {
@@ -380,6 +391,7 @@ export default {
         this.tickersAutocompete = [];
       }
     },
+
     clickAutocomplete(a) {
       this.ticker = a;
       this.add(a);
