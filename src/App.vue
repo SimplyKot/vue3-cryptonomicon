@@ -470,6 +470,10 @@ export default {
       this.add(a);
     },
   },
-  watch: {},
+  watch: {
+    filter() {
+      this.page = 1;
+    },
+  },
 };
 </script>
