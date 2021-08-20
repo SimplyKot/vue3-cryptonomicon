@@ -199,10 +199,10 @@
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in filteredTickers()"
+            v-for="t in paginatedTickers"
             :key="t.name"
             @click="select(t)"
-            :class="{ 'border-4': sel == t }"
+            :class="{ 'border-4': selectedTicker == t }"
             class="
               bg-white
               overflow-hidden
@@ -259,13 +259,13 @@
         </dl>
         <hr class="w-full border-t border-gray-600 my-4" />
       </template>
-      <section v-if="sel" class="relative">
+      <section v-if="selectedTicker" class="relative">
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-          {{ sel.name }} - USD
+          {{ selectedTicker.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
-            v-for="(bar, idx) in normalizeGraph()"
+            v-for="(bar, idx) in normalizedGraph"
             :key="idx"
             :style="{ height: `${bar}%` }"
             class="bg-purple-800 border w-10"
@@ -274,7 +274,7 @@
         <button
           type="button"
           class="absolute top-0 right-0"
-          @click="sel = null"
+          @click="selectedTicker = null"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -309,16 +309,17 @@ export default {
   data() {
     return {
       ticker: "",
+      filter: "",
+
       tickers: [],
+      selectedTicker: null,
+
       tickersList: {},
       tickersAutocompete: [],
       errorAdded: false,
-      sel: null,
       spinner: true,
       graph: [],
       page: 1,
-      hasNextPage: true,
-      filter: "",
     };
   },
   created: function () {
@@ -343,19 +344,44 @@ export default {
 
     this.getTickers();
   },
-  methods: {
-    filteredTickers() {
-      const start = (this.page - 1) * 6;
-      const end = this.page * 6;
 
-      const filteredTickers = this.tickers.filter((ticker) => {
+  computed: {
+    startIndex() {
+      return (this.page - 1) * 6;
+    },
+    endIndex() {
+      return this.page * 6;
+    },
+    filteredTickers() {
+      return this.tickers.filter((ticker) => {
         return ticker.name.includes(this.filter.toUpperCase());
       });
-
-      this.hasNextPage = filteredTickers.length > end;
-      return filteredTickers.slice(start, end);
     },
 
+    paginatedTickers() {
+      return this.filteredTickers.slice(this.startIndex, this.endIndex);
+    },
+
+    hasNextPage() {
+      return this.filteredTickers.length > this.endIndex;
+    },
+
+    normalizedGraph() {
+      const minValue = Math.min(...this.graph);
+      const maxValue = Math.max(...this.graph);
+      if (minValue == maxValue) {
+        return this.graph.map(() => 50);
+      }
+
+      return this.graph.map((price) => {
+        return 5 + 95 * ((price - minValue) / (maxValue - minValue));
+      });
+
+      //console.log(res);
+    },
+  },
+
+  methods: {
     subscribeToUpdates(tickerName) {
       setInterval(async () => {
         const f = await fetch(
@@ -364,7 +390,7 @@ export default {
         const data = await f.json();
         this.tickers.find((t) => t.name == tickerName).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-        if (this.sel?.name == tickerName) {
+        if (this.selectedTicker?.name == tickerName) {
           this.graph.push(data.USD);
         }
       }, 3000);
@@ -406,29 +432,15 @@ export default {
     },
 
     select(ticker) {
-      this.sel = ticker;
-      this.graph = [];
+      this.selectedTicker = ticker;
     },
 
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
-      this.sel = null;
-    },
-
-    normalizeGraph() {
-      var res = [];
-      const minValue = Math.min(...this.graph);
-      const maxValue = Math.max(...this.graph);
-      if ((minValue != maxValue) & (this.graph.length > 1)) {
-        res = this.graph.map((price) => {
-          return 5 + 95 * ((price - minValue) / (maxValue - minValue));
-        });
-      } else {
-        return null;
+      if (this.selectedTicker == tickerToRemove) {
+        this.selectedTicker = null;
       }
-      //console.log(res);
-      return res;
     },
 
     async getTickers() {
@@ -484,6 +496,16 @@ export default {
     },
   },
   watch: {
+    selectedTicker() {
+      this.graph = [];
+    },
+
+    paginatedTickers() {
+      if (this.paginatedTickers.length == 0 && this.page > 1) {
+        this.page -= 1;
+      }
+    },
+
     filter() {
       this.page = 1;
       window.history.pushState(
