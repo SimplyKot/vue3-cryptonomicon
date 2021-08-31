@@ -217,7 +217,7 @@
                 {{ t.name }} - USD
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ t.price }}
+                {{ formatPrice(t.price) }}
               </dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
@@ -304,7 +304,7 @@
 </template>
 
 <script>
-import { loadTicker, loadTickerList } from "./api";
+import { loadTickers, loadTickersList } from "./api";
 
 export default {
   name: "App",
@@ -378,10 +378,12 @@ export default {
       const minValue = Math.min(...this.graph);
       const maxValue = Math.max(...this.graph);
       if (minValue == maxValue) {
+        console.log(this.graph.map(() => 50));
         return this.graph.map(() => 50);
       }
 
       return this.graph.map((price) => {
+        console.log(5 + 95 * ((price - minValue) / (maxValue - minValue)));
         return 5 + 95 * ((price - minValue) / (maxValue - minValue));
       });
 
@@ -390,8 +392,16 @@ export default {
   },
 
   methods: {
+    formatPrice(price) {
+      if (price === "-") {
+        return price;
+      }
+      const formatedPrice = price > 1 ? price.toFixed(2) : price.toPrecision(2);
+      return formatedPrice;
+    },
+
     async getTickers() {
-      const listTickersData = await loadTickerList();
+      const listTickersData = await loadTickersList();
       this.tickersList = Array.from(Object.values(listTickersData.Data));
       this.spinner = false;
     },
@@ -400,7 +410,7 @@ export default {
       if (!this.tickers.length) {
         return;
       }
-      const exchangeData = await loadTicker(
+      const exchangeData = await loadTickers(
         this.tickers.map((t) => {
           return t.name;
         })
@@ -409,18 +419,7 @@ export default {
       this.tickers.forEach((ticker) => {
         const price = exchangeData[ticker.name.toUpperCase()];
         //ticker.price = price ? 1 / price : "-";
-        if (!price) {
-          ticker.price = "-";
-          return;
-        }
-
-        const normalizedPrice = 1 / price;
-        const formatedPrice =
-          normalizedPrice > 1
-            ? normalizedPrice.toFixed(2)
-            : normalizedPrice.toPrecision(2);
-
-        ticker.price = formatedPrice;
+        ticker.price = price ?? "-";
       });
     },
 
