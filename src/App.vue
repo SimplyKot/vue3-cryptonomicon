@@ -304,7 +304,11 @@
 </template>
 
 <script>
-import { loadTickers, loadTickersList } from "./api";
+import {
+  // loadTickers,
+  // loadTickersList,
+  subscribeToTicker,
+} from "./api";
 
 export default {
   name: "App",
@@ -343,6 +347,9 @@ export default {
 
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
+      this.tickers.forEach((ticker) =>
+        subscribeToTicker(ticker.name, () => {})
+      );
     }
 
     setInterval(this.updateTickers, 5000);
@@ -401,26 +408,25 @@ export default {
     },
 
     async getTickers() {
-      const listTickersData = await loadTickersList();
-      this.tickersList = Array.from(Object.values(listTickersData.Data));
+      // const listTickersData = await loadTickersList();
+      // this.tickersList = Array.from(Object.values(listTickersData.Data));
       this.spinner = false;
     },
 
     async updateTickers() {
-      if (!this.tickers.length) {
-        return;
-      }
-      const exchangeData = await loadTickers(
-        this.tickers.map((t) => {
-          return t.name;
-        })
-      );
-
-      this.tickers.forEach((ticker) => {
-        const price = exchangeData[ticker.name.toUpperCase()];
-        //ticker.price = price ? 1 / price : "-";
-        ticker.price = price ?? "-";
-      });
+      // if (!this.tickers.length) {
+      //   return;
+      // }
+      // const exchangeData = await loadTickers(
+      //   this.tickers.map((t) => {
+      //     return t.name;
+      //   })
+      // );
+      // this.tickers.forEach((ticker) => {
+      //   const price = exchangeData[ticker.name.toUpperCase()];
+      //   ticker.price = price ?? "-";
+      //   //this.graph.push(price);
+      // });
     },
 
     add() {
@@ -454,6 +460,7 @@ export default {
       this.tickersAutocompete = [];
       this.errorAdded = false;
       this.filter = "";
+      subscribeToTicker(this.ticker.name, () => {});
     },
 
     select(ticker) {
