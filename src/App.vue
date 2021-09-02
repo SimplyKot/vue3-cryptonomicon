@@ -306,8 +306,9 @@
 <script>
 import {
   // loadTickers,
-  // loadTickersList,
+  loadTickersList,
   subscribeToTicker,
+  unsubscribeFromTicker,
 } from "./api";
 
 export default {
@@ -348,7 +349,10 @@ export default {
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
       this.tickers.forEach((ticker) =>
-        subscribeToTicker(ticker.name, () => {})
+        subscribeToTicker(ticker.name, (newPrice) => {
+          console.log("ticker price change to: ", newPrice, ticker.name);
+          this.updateTicker(ticker.name, newPrice);
+        })
       );
     }
 
@@ -399,6 +403,12 @@ export default {
   },
 
   methods: {
+    updateTicker(name, price) {
+      this.tickers
+        .filter((ticker) => ticker.name == name)
+        .forEach((ticker) => (ticker.price = price));
+    },
+
     formatPrice(price) {
       if (price === "-") {
         return price;
@@ -408,8 +418,8 @@ export default {
     },
 
     async getTickers() {
-      // const listTickersData = await loadTickersList();
-      // this.tickersList = Array.from(Object.values(listTickersData.Data));
+      const listTickersData = await loadTickersList();
+      this.tickersList = Array.from(Object.values(listTickersData.Data));
       this.spinner = false;
     },
 
@@ -456,11 +466,13 @@ export default {
 
       //localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
 
-      this.ticker = "";
       this.tickersAutocompete = [];
       this.errorAdded = false;
       this.filter = "";
-      subscribeToTicker(this.ticker.name, () => {});
+      this.ticker = "";
+      subscribeToTicker(currentTicker.name, (newPrice) => {
+        this.updateTicker(currentTicker.name, newPrice);
+      });
     },
 
     select(ticker) {
@@ -473,6 +485,7 @@ export default {
       if (this.selectedTicker == tickerToRemove) {
         this.selectedTicker = null;
       }
+      unsubscribeFromTicker(tickerToRemove.name);
     },
 
     handleInput(e) {
