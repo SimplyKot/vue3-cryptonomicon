@@ -350,7 +350,7 @@ export default {
       this.tickers = JSON.parse(tickersData);
       this.tickers.forEach((ticker) =>
         subscribeToTicker(ticker.name, (newPrice) => {
-          console.log("ticker price change to: ", newPrice, ticker.name);
+          //console.log("ticker price change to: ", newPrice, ticker.name);
           this.updateTicker(ticker.name, newPrice);
         })
       );
@@ -389,12 +389,10 @@ export default {
       const minValue = Math.min(...this.graph);
       const maxValue = Math.max(...this.graph);
       if (minValue == maxValue) {
-        console.log(this.graph.map(() => 50));
         return this.graph.map(() => 50);
       }
 
       return this.graph.map((price) => {
-        console.log(5 + 95 * ((price - minValue) / (maxValue - minValue)));
         return 5 + 95 * ((price - minValue) / (maxValue - minValue));
       });
 
@@ -406,7 +404,12 @@ export default {
     updateTicker(name, price) {
       this.tickers
         .filter((ticker) => ticker.name == name)
-        .forEach((ticker) => (ticker.price = price));
+        .forEach((ticker) => {
+          if (ticker == this.selectedTicker) {
+            this.graph.push(price);
+          }
+          ticker.price = price;
+        });
     },
 
     formatPrice(price) {
@@ -421,22 +424,6 @@ export default {
       const listTickersData = await loadTickersList();
       this.tickersList = Array.from(Object.values(listTickersData.Data));
       this.spinner = false;
-    },
-
-    async updateTickers() {
-      // if (!this.tickers.length) {
-      //   return;
-      // }
-      // const exchangeData = await loadTickers(
-      //   this.tickers.map((t) => {
-      //     return t.name;
-      //   })
-      // );
-      // this.tickers.forEach((ticker) => {
-      //   const price = exchangeData[ticker.name.toUpperCase()];
-      //   ticker.price = price ?? "-";
-      //   //this.graph.push(price);
-      // });
     },
 
     add() {
@@ -454,13 +441,13 @@ export default {
       }
 
       //Провряем что такая монетка сущствеут в принципе
-      if (
-        !this.tickersList.find((t) => {
-          return t.Symbol === currentTicker.name;
-        })
-      ) {
-        return;
-      }
+      // if (
+      //   !this.tickersList.find((t) => {
+      //     return t.Symbol === currentTicker.name;
+      //   })
+      // ) {
+      //   return;
+      // }
 
       this.tickers = [...this.tickers, currentTicker];
 
