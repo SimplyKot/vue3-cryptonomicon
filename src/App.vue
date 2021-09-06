@@ -349,9 +349,9 @@ export default {
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
       this.tickers.forEach((ticker) =>
-        subscribeToTicker(ticker.name, (newPrice) => {
+        subscribeToTicker(ticker.name, (newPrice, isExist) => {
           //console.log("ticker price change to: ", newPrice, ticker.name);
-          this.updateTicker(ticker.name, newPrice);
+          this.updateTicker(ticker.name, newPrice, isExist);
         })
       );
     }
@@ -401,7 +401,7 @@ export default {
   },
 
   methods: {
-    updateTicker(name, price) {
+    updateTicker(name, price, isExist) {
       this.tickers
         .filter((ticker) => ticker.name == name)
         .forEach((ticker) => {
@@ -409,6 +409,11 @@ export default {
             this.graph.push(price);
           }
           ticker.price = price;
+          ticker.isExist = isExist;
+          console.log(ticker);
+          if (!ticker.isExist) {
+            debugger;
+          }
         });
     },
 

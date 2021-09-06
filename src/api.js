@@ -1,7 +1,8 @@
 const API_KEY =
   "9a54c61b45ac389b252ee8b8eab0a0521930b18780641228922688851af95c78";
 const AGREGATE_INDEX = "5";
-// const UNKNOWN_CURRENCY = "500";
+const UNKNOWN_CURRENCY_INDEX = "500";
+const UNKNOWN_CURRENCY_MESSAGE = "INVALID_SUB";
 
 const tickersHandlers = new Map();
 
@@ -10,17 +11,47 @@ const socket = new WebSocket(
 );
 
 socket.addEventListener("message", (e) => {
+  //const subscribers = tickersHandlers.get(ticker) || [];
+  const handlers = tickersHandlers.get(currency) ?? [];
+
   const {
     TYPE: type,
     FROMSYMBOL: currency,
     PRICE: newPrice,
+    MESSAGE: rawMessage,
+    PARAMETER: rawParameter,
   } = JSON.parse(e.data);
-  if (type !== AGREGATE_INDEX || newPrice == undefined) {
+
+  if (type !== AGREGATE_INDEX && type !== UNKNOWN_CURRENCY_INDEX) {
     return;
   }
 
-  const handlers = tickersHandlers.get(currency) ?? [];
-  handlers.forEach((fn) => fn(newPrice));
+  if (type == AGREGATE_INDEX && newPrice == undefined) {
+    return;
+  }
+
+  const isExist = !(
+    type == UNKNOWN_CURRENCY_INDEX && rawMessage == UNKNOWN_CURRENCY_MESSAGE
+  );
+
+  //TODO: Доделать обновелние ствтусв тикера
+  if (!isExist) {
+    tickersHandlers.forEach((handler) => {
+      console.log(handler);
+    });
+    console.log(currency, rawMessage);
+    Object.keys(Object.fromEntries(tickersHandlers)).forEach((coin) => {
+      console.log(
+        coin,
+        rawParameter,
+        rawParameter.includes(`5~CCCAGG~${coin}~`)
+      );
+    });
+    console.log();
+    debugger;
+  }
+
+  handlers.forEach((fn) => fn(newPrice, isExist));
 });
 
 function sendToWs(message) {
