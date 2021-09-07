@@ -60,9 +60,6 @@ socket.addEventListener("message", (e) => {
   console.log(currency, newPrice, isExist);
 
   handlers.forEach((fn) => fn(newPrice, isExist));
-  if (typeof isExist == undefined || !isExist) {
-    debugger;
-  }
 });
 
 function sendToWs(message) {
