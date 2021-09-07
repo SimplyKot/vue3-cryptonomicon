@@ -202,7 +202,10 @@
             v-for="t in paginatedTickers"
             :key="t.name"
             @click="select(t)"
-            :class="{ 'border-4': selectedTicker == t }"
+            :class="{
+              'border-4': selectedTicker == t,
+              'bg-red-100': !t.isExist,
+            }"
             class="
               bg-white
               overflow-hidden
@@ -402,6 +405,7 @@ export default {
 
   methods: {
     updateTicker(name, price, isExist) {
+      console.log(name, price, isExist);
       this.tickers
         .filter((ticker) => ticker.name == name)
         .forEach((ticker) => {
@@ -411,9 +415,9 @@ export default {
           ticker.price = price;
           ticker.isExist = isExist;
           console.log(ticker);
-          if (!ticker.isExist) {
-            debugger;
-          }
+          // if (!ticker.isExist) {
+          //   debugger;
+          // }
         });
     },
 

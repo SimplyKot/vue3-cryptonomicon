@@ -12,16 +12,22 @@ const socket = new WebSocket(
 
 socket.addEventListener("message", (e) => {
   //const subscribers = tickersHandlers.get(ticker) || [];
-  const handlers = tickersHandlers.get(currency) ?? [];
+
+  var currency = "";
+  var newPrice = "";
 
   const {
     TYPE: type,
-    FROMSYMBOL: currency,
-    PRICE: newPrice,
+    FROMSYMBOL: rawCurrency,
+    PRICE: rawPrice,
     MESSAGE: rawMessage,
     PARAMETER: rawParameter,
   } = JSON.parse(e.data);
 
+  currency = rawCurrency;
+  newPrice = rawPrice ?? "-";
+
+  // Игнорируем все ненужные типы сообщений
   if (type !== AGREGATE_INDEX && type !== UNKNOWN_CURRENCY_INDEX) {
     return;
   }
@@ -36,22 +42,30 @@ socket.addEventListener("message", (e) => {
 
   //TODO: Доделать обновелние ствтусв тикера
   if (!isExist) {
-    tickersHandlers.forEach((handler) => {
-      console.log(handler);
-    });
-    console.log(currency, rawMessage);
+    // tickersHandlers.forEach((handler) => {
+    //   console.log(handler);
+    // });
+    // console.log(currency, rawMessage);
     Object.keys(Object.fromEntries(tickersHandlers)).forEach((coin) => {
-      console.log(
-        coin,
-        rawParameter,
-        rawParameter.includes(`5~CCCAGG~${coin}~`)
-      );
+      if (rawParameter.includes(`5~CCCAGG~${coin}~`)) {
+        console.log(
+          coin,
+          rawParameter,
+          rawParameter.includes(`5~CCCAGG~${coin}~`)
+        );
+        currency = coin;
+        newPrice = "-";
+      }
     });
-    console.log();
-    debugger;
   }
 
+  const handlers = tickersHandlers.get(currency) ?? [];
+
+  //console.log(currency, newPrice, isExist);
+
   handlers.forEach((fn) => fn(newPrice, isExist));
+
+  //debugger;
 });
 
 function sendToWs(message) {
