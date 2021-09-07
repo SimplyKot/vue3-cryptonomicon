@@ -15,6 +15,7 @@ socket.addEventListener("message", (e) => {
 
   var currency = "";
   var newPrice = "";
+  var isExist = true;
 
   const {
     TYPE: type,
@@ -25,7 +26,7 @@ socket.addEventListener("message", (e) => {
   } = JSON.parse(e.data);
 
   currency = rawCurrency;
-  newPrice = rawPrice ?? "-";
+  newPrice = rawPrice;
 
   // Игнорируем все ненужные типы сообщений
   if (type !== AGREGATE_INDEX && type !== UNKNOWN_CURRENCY_INDEX) {
@@ -36,23 +37,18 @@ socket.addEventListener("message", (e) => {
     return;
   }
 
-  const isExist = !(
-    type == UNKNOWN_CURRENCY_INDEX && rawMessage == UNKNOWN_CURRENCY_MESSAGE
-  );
-
-  //TODO: Доделать обновелние ствтусв тикера
-  if (!isExist) {
-    // tickersHandlers.forEach((handler) => {
-    //   console.log(handler);
-    // });
-    // console.log(currency, rawMessage);
+  if (
+    type == UNKNOWN_CURRENCY_INDEX &&
+    rawMessage == UNKNOWN_CURRENCY_MESSAGE
+  ) {
     Object.keys(Object.fromEntries(tickersHandlers)).forEach((coin) => {
       if (rawParameter.includes(`5~CCCAGG~${coin}~`)) {
         console.log(
           coin,
           rawParameter,
-          rawParameter.includes(`5~CCCAGG~${coin}~`)
+          !rawParameter.includes(`5~CCCAGG~${coin}~`)
         );
+        isExist = false;
         currency = coin;
         newPrice = "-";
       }
@@ -61,11 +57,12 @@ socket.addEventListener("message", (e) => {
 
   const handlers = tickersHandlers.get(currency) ?? [];
 
-  //console.log(currency, newPrice, isExist);
+  console.log(currency, newPrice, isExist);
 
   handlers.forEach((fn) => fn(newPrice, isExist));
-
-  //debugger;
+  if (typeof isExist == undefined || !isExist) {
+    debugger;
+  }
 });
 
 function sendToWs(message) {

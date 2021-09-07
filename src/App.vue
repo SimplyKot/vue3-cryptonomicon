@@ -414,7 +414,7 @@ export default {
           }
           ticker.price = price;
           ticker.isExist = isExist;
-          console.log(ticker);
+          //       console.log(ticker);
           // if (!ticker.isExist) {
           //   debugger;
           // }
@@ -436,7 +436,11 @@ export default {
     },
 
     add() {
-      const currentTicker = { name: this.ticker.toUpperCase(), price: "-" };
+      const currentTicker = {
+        name: this.ticker.toUpperCase(),
+        price: "-",
+        isExist: true,
+      };
 
       // Проверяем, что тикер еще не добпвлен
       if (
@@ -466,8 +470,8 @@ export default {
       this.errorAdded = false;
       this.filter = "";
       this.ticker = "";
-      subscribeToTicker(currentTicker.name, (newPrice) => {
-        this.updateTicker(currentTicker.name, newPrice);
+      subscribeToTicker(currentTicker.name, (newPrice, isExist) => {
+        this.updateTicker(currentTicker.name, newPrice, isExist);
       });
     },
 
