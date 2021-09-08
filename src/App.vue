@@ -405,7 +405,7 @@ export default {
 
   methods: {
     updateTicker(name, price, isExist) {
-      console.log(name, price, isExist);
+      //console.log(name, price, isExist);
       this.tickers
         .filter((ticker) => ticker.name == name)
         .forEach((ticker) => {

@@ -10,6 +10,7 @@ const socket = new WebSocket(
   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
 );
 
+// Обработчик событий WS
 socket.addEventListener("message", (e) => {
   //const subscribers = tickersHandlers.get(ticker) || [];
 
@@ -33,21 +34,18 @@ socket.addEventListener("message", (e) => {
     return;
   }
 
+  // Игнорируем сообщения о валидных тикерах, но без указания цены
   if (type == AGREGATE_INDEX && newPrice == undefined) {
     return;
   }
 
+  // Из соообщения о несуществующей валюте вытаскиваем нзвания этой валюты и ставим ей признак несуществования
   if (
     type == UNKNOWN_CURRENCY_INDEX &&
     rawMessage == UNKNOWN_CURRENCY_MESSAGE
   ) {
     Object.keys(Object.fromEntries(tickersHandlers)).forEach((coin) => {
       if (rawParameter.includes(`5~CCCAGG~${coin}~`)) {
-        console.log(
-          coin,
-          rawParameter,
-          !rawParameter.includes(`5~CCCAGG~${coin}~`)
-        );
         isExist = false;
         currency = coin;
         newPrice = "-";
@@ -55,10 +53,10 @@ socket.addEventListener("message", (e) => {
     });
   }
 
+  //Выбираем хэндлер валюты из сообщения
   const handlers = tickersHandlers.get(currency) ?? [];
 
-  console.log(currency, newPrice, isExist);
-
+  // Зарускаем колбеки с обновленными параметрами
   handlers.forEach((fn) => fn(newPrice, isExist));
 });
 
