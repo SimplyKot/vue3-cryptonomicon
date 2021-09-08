@@ -499,7 +499,10 @@ export default {
       if (e.key === "Backspace") {
         inputValue = this.ticker.slice(0, this.ticker.length - 1);
       } else {
-        if (e.key.length === 1) {
+        if (
+          (e.keyCode >= 65 && e.keyCode <= 90) ||
+          (e.keyCode >= 48 && e.keyCode <= 57)
+        ) {
           inputValue = this.ticker + e.key;
         }
       }
