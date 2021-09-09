@@ -3,6 +3,8 @@ const API_KEY =
 const AGREGATE_INDEX = "5";
 const UNKNOWN_CURRENCY_INDEX = "500";
 const UNKNOWN_CURRENCY_MESSAGE = "INVALID_SUB";
+const UNKNOWN_DIRECT_PAIR_INFO =
+  "We have not integrated any of the exchanges BTCD~USD pair trades on or we have not currently mapped it.";
 
 const tickersHandlers = new Map();
 
@@ -24,6 +26,7 @@ socket.addEventListener("message", (e) => {
     PRICE: rawPrice,
     MESSAGE: rawMessage,
     PARAMETER: rawParameter,
+    INFO: info,
   } = JSON.parse(e.data);
 
   currency = rawCurrency;
@@ -44,13 +47,21 @@ socket.addEventListener("message", (e) => {
     type == UNKNOWN_CURRENCY_INDEX &&
     rawMessage == UNKNOWN_CURRENCY_MESSAGE
   ) {
-    Object.keys(Object.fromEntries(tickersHandlers)).forEach((coin) => {
-      if (rawParameter.includes(`5~CCCAGG~${coin}~`)) {
-        isExist = false;
-        currency = coin;
-        newPrice = "-";
-      }
-    });
+    if (info === UNKNOWN_DIRECT_PAIR_INFO) {
+      console.log("Монетка существект, но нет прямого курса");
+
+      //TODO:
+
+      // 1. Подписаться на курс монетка-BTC
+      // 2. Подписаться на курс BTC-USD
+      // 3. Реализовать крос-курс
+      // 4. Рализовать корректную отписку (от BTC отписываться только если нет других кросс-курсов
+      // и прямой подписки прямой подписки)
+    }
+    currency = getTickerNameFormMessage(rawParameter);
+    isExist = false;
+    newPrice = "-";
+    //debugger;
   }
 
   //Выбираем хэндлер валюты из сообщения
@@ -76,20 +87,31 @@ function sendToWs(message) {
   );
 }
 
-function subscribeToTickerOnWs(ticker) {
+function getTickerNameFormMessage(parameter) {
+  const coin = Object.keys(Object.fromEntries(tickersHandlers)).find((coin) => {
+    if (parameter.includes(`5~CCCAGG~${coin}~`)) {
+      return true;
+    }
+  });
+  //debugger;
+  return coin;
+}
+
+function subscribeToTickerOnWs(ticker, toCurrency = "USD") {
   sendToWs({
     action: "SubAdd",
-    subs: [`5~CCCAGG~${ticker}~USD`],
+    subs: [`5~CCCAGG~${ticker}~${toCurrency}`],
   });
 }
 
-function unsubscribeToTickerOnWs(ticker) {
+function unsubscribeToTickerOnWs(ticker, toCurrency = "USD") {
   sendToWs({
     action: "SubRemove",
-    subs: [`5~CCCAGG~${ticker}~USD`],
+    subs: [`5~CCCAGG~${ticker}~${toCurrency}`],
   });
 }
 
+// Зашружаем список доступных монет
 export const loadTickersList = () => {
   return fetch(
     `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
