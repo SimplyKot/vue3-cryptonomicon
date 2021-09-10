@@ -47,9 +47,14 @@ socket.addEventListener("message", (e) => {
     type == UNKNOWN_CURRENCY_INDEX &&
     rawMessage == UNKNOWN_CURRENCY_MESSAGE
   ) {
+    currency = getTickerNameFormMessage(rawParameter);
     if (info === UNKNOWN_DIRECT_PAIR_INFO) {
-      console.log("Монетка существект, но нет прямого курса");
-
+      console.log(`Монетка ${currency} существует, но нет прямого курса`);
+      isExist = true;
+      newPrice = 0;
+      const asd = checkCoinInHandlers("BTC");
+      console.log(asd);
+      //debugger;
       //TODO:
 
       // 1. Подписаться на курс монетка-BTC
@@ -57,10 +62,12 @@ socket.addEventListener("message", (e) => {
       // 3. Реализовать крос-курс
       // 4. Рализовать корректную отписку (от BTC отписываться только если нет других кросс-курсов
       // и прямой подписки прямой подписки)
+    } else {
+      console.log(`Монетки ${currency} не существует`);
+      isExist = false;
+      newPrice = "-";
     }
-    currency = getTickerNameFormMessage(rawParameter);
-    isExist = false;
-    newPrice = "-";
+
     //debugger;
   }
 
@@ -85,6 +92,15 @@ function sendToWs(message) {
     },
     { once: true }
   );
+}
+function checkCoinInHandlers(currency) {
+  const isExist = Object.keys(Object.fromEntries(tickersHandlers)).find(
+    (coin) => {
+      return currency == coin;
+    }
+  );
+  //debugger;
+  return !!isExist;
 }
 
 function getTickerNameFormMessage(parameter) {
