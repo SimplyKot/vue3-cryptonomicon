@@ -93,6 +93,8 @@ function sendToWs(message) {
     { once: true }
   );
 }
+
+// Функция проверяет есть ли активая подписка на монетку
 function checkCoinInHandlers(currency) {
   const isExist = Object.keys(Object.fromEntries(tickersHandlers)).find(
     (coin) => {
