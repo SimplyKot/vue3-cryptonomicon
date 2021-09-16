@@ -7,6 +7,7 @@ const UNKNOWN_DIRECT_PAIR_INFO =
   "We have not integrated any of the exchanges BTCD~USD pair trades on or we have not currently mapped it.";
 
 const tickersHandlers = new Map();
+var BTCusers = [];
 
 const socket = new WebSocket(
   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
@@ -52,8 +53,14 @@ socket.addEventListener("message", (e) => {
       console.log(`Монетка ${currency} существует, но нет прямого курса`);
       isExist = true;
       newPrice = 0;
-      const asd = checkCoinInHandlers("BTC");
-      console.log(asd);
+      if (!checkCoinInHandlers("BTC")) {
+        console.log("Нет подписки на BTC-USD. Выполняем подписку.");
+        subscribeToTickerOnWs("BTC", "USD");
+      } else {
+        console.log("Подписка на BTC-USD есть. Будем пользоваться ей.");
+      }
+      BTCusers.push(currency);
+      subscribeToTickerOnWs(currency, "BTC");
       //debugger;
       //TODO:
 
@@ -101,7 +108,6 @@ function checkCoinInHandlers(currency) {
       return currency == coin;
     }
   );
-  //debugger;
   return !!isExist;
 }
 
@@ -115,14 +121,14 @@ function getTickerNameFormMessage(parameter) {
   return coin;
 }
 
-function subscribeToTickerOnWs(ticker, toCurrency = "USD") {
+function subscribeToTickerOnWs(ticker, toCurrency) {
   sendToWs({
     action: "SubAdd",
     subs: [`5~CCCAGG~${ticker}~${toCurrency}`],
   });
 }
 
-function unsubscribeToTickerOnWs(ticker, toCurrency = "USD") {
+function unsubscribeToTickerOnWs(ticker, toCurrency) {
   sendToWs({
     action: "SubRemove",
     subs: [`5~CCCAGG~${ticker}~${toCurrency}`],
@@ -138,13 +144,44 @@ export const loadTickersList = () => {
   });
 };
 
-export const subscribeToTicker = (ticker, cb) => {
+export const subscribeToTicker = (ticker, cb, toCurrency = "USD") => {
+  if (ticker === "BTC") {
+    BTCusers.push(ticker);
+  }
   const subscribers = tickersHandlers.get(ticker) || [];
   tickersHandlers.set(ticker, [...subscribers, cb]);
-  subscribeToTickerOnWs(ticker);
+  subscribeToTickerOnWs(ticker, toCurrency);
 };
 
-export const unsubscribeFromTicker = (ticker) => {
-  tickersHandlers.delete(ticker);
-  unsubscribeToTickerOnWs(ticker);
+export const unsubscribeFromTicker = (ticker, toCurrency = "USD") => {
+  if (
+    BTCusers.some((element) => {
+      return element === ticker;
+    })
+  ) {
+    console.log(`Запрошена отписка от кросскурса ${ticker}-USD`);
+    console.log(BTCusers);
+    BTCusers = BTCusers.filter((coin) => {
+      const res = coin !== ticker;
+      console.log(res);
+      return res;
+    });
+    //if (!proxyBTCusers.length&&checkCoinInHandlers("BTC"))
+    console.log(BTCusers);
+    if (BTCusers.length === 0) {
+      unsubscribeToTickerOnWs("BTC", "USD");
+    }
+  }
+  //tickersHandlers.delete(ticker);
+
+  // tickersHandlers.delete(ticker);
+  // if (ticker == "BTC" && proxyBTCusers.some("ticker")) {
+  //   console.log(
+  //     "Запрошена отмена подписки на BTC, но курс BTC-USD еще использутеся в кросс-конвертации."
+  //   );
+  //   return;
+  // }
+  else {
+    unsubscribeToTickerOnWs(ticker, toCurrency);
+  }
 };
