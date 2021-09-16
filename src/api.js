@@ -7,7 +7,9 @@ const UNKNOWN_DIRECT_PAIR_INFO =
   "We have not integrated any of the exchanges BTCD~USD pair trades on or we have not currently mapped it.";
 
 const tickersHandlers = new Map();
+// Массив с пользователямя курса BTC-USD
 var BTCusers = [];
+//  Актуальный курс BTC-USD
 var BTCUSDexchange = 0;
 
 const socket = new WebSocket(
