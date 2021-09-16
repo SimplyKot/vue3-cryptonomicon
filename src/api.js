@@ -8,6 +8,7 @@ const UNKNOWN_DIRECT_PAIR_INFO =
 
 const tickersHandlers = new Map();
 var BTCusers = [];
+var BTCUSDexchange = 0;
 
 const socket = new WebSocket(
   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
@@ -76,6 +77,12 @@ socket.addEventListener("message", (e) => {
     }
 
     //debugger;
+  }
+
+  // Если есть подписчики на курс BTC-USD и сообщение содержит этот курс - сохраняем его
+  if (BTCusers.length && currency === "BTC") {
+    BTCUSDexchange = newPrice;
+    console.log(BTCUSDexchange);
   }
 
   //Выбираем хэндлер валюты из сообщения
