@@ -27,6 +27,7 @@ socket.addEventListener("message", (e) => {
   const {
     TYPE: type,
     FROMSYMBOL: rawCurrency,
+    TOSYMBOL: rawProxyCurrency,
     PRICE: rawPrice,
     MESSAGE: rawMessage,
     PARAMETER: rawParameter,
@@ -46,7 +47,7 @@ socket.addEventListener("message", (e) => {
     return;
   }
 
-  // Из соообщения о несуществующей валюте вытаскиваем нзвания этой валюты и ставим ей признак несуществования
+  // Из соообщения о несуществующей валюте вытаскиваем названия этой валюты и ставим ей признак несуществования
   if (
     type == UNKNOWN_CURRENCY_INDEX &&
     rawMessage == UNKNOWN_CURRENCY_MESSAGE
@@ -85,6 +86,10 @@ socket.addEventListener("message", (e) => {
   if (BTCusers.length && currency === "BTC") {
     BTCUSDexchange = newPrice;
     console.log(BTCUSDexchange);
+  }
+
+  if (BTCusers.includes(currency) && rawProxyCurrency === "BTC") {
+    newPrice = newPrice * BTCUSDexchange;
   }
 
   //Выбираем хэндлер валюты из сообщения
