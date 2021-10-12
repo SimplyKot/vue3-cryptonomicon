@@ -90,6 +90,7 @@ socket.addEventListener("message", (e) => {
     console.log(BTCUSDexchange);
   }
 
+  // Есл пришел курс для подписчика ***-BTC, то переводим его в курс ***-USD
   if (BTCusers.includes(currency) && rawProxyCurrency === "BTC") {
     newPrice = newPrice * BTCUSDexchange;
   }
