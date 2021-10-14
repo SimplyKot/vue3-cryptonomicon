@@ -67,14 +67,6 @@ socket.addEventListener("message", (e) => {
       }
       BTCusers.push(currency);
       subscribeToTickerOnWs(currency, "BTC");
-      //debugger;
-      //TODO:
-
-      // 1. [+] Подписаться на курс монетка-BTC
-      // 2. [+] Подписаться на курс BTC-USD
-      // 3. Реализовать крос-курс
-      // 4. [+-]Рализовать корректную отписку (от BTC отписываться только если нет других кросс-курсов
-      // и прямой подписки прямой подписки)
     } else {
       console.log(`Монетки ${currency} не существует`);
       isExist = false;
@@ -128,6 +120,7 @@ function checkCoinInHandlers(currency) {
   return !!isExist;
 }
 
+// Функция доставет название монеты из сообщения
 function getTickerNameFormMessage(parameter) {
   const coin = Object.keys(Object.fromEntries(tickersHandlers)).find((coin) => {
     if (parameter.includes(`5~CCCAGG~${coin}~`)) {
@@ -152,7 +145,7 @@ function unsubscribeToTickerOnWs(ticker, toCurrency) {
   });
 }
 
-// Зашружаем список доступных монет
+// Загружаем список доступных монет
 export const loadTickersList = () => {
   return fetch(
     `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
@@ -161,7 +154,10 @@ export const loadTickersList = () => {
   });
 };
 
+// Подписывается на монету
 export const subscribeToTicker = (ticker, cb, toCurrency = "USD") => {
+  // Если подписка на BTC, то добавляем её в список использующих BTC
+  // так как он может нам понадобится для кросс-курса
   if (ticker === "BTC") {
     BTCusers.push(ticker);
   }
@@ -170,7 +166,9 @@ export const subscribeToTicker = (ticker, cb, toCurrency = "USD") => {
   subscribeToTickerOnWs(ticker, toCurrency);
 };
 
+// Отписываемся от монетки
 export const unsubscribeFromTicker = (ticker, toCurrency = "USD") => {
+  // Если запрошена отписка от монетки использующей кросс-курс
   if (
     BTCusers.some((element) => {
       return element === ticker;
@@ -178,27 +176,19 @@ export const unsubscribeFromTicker = (ticker, toCurrency = "USD") => {
   ) {
     console.log(`Запрошена отписка от кросскурса ${ticker}-USD`);
     console.log(BTCusers);
+    // Удаляем название монеты из списка использующих кросс-курс
     BTCusers = BTCusers.filter((coin) => {
       const res = coin !== ticker;
       console.log(res);
       return res;
     });
-    //if (!proxyBTCusers.length&&checkCoinInHandlers("BTC"))
+
     console.log(BTCusers);
+    // Если список использующих кросс-курс пуст - отписываемся от BTC-USD
     if (BTCusers.length === 0) {
       unsubscribeToTickerOnWs("BTC", "USD");
     }
-  }
-  //tickersHandlers.delete(ticker);
-
-  // tickersHandlers.delete(ticker);
-  // if (ticker == "BTC" && proxyBTCusers.some("ticker")) {
-  //   console.log(
-  //     "Запрошена отмена подписки на BTC, но курс BTC-USD еще использутеся в кросс-конвертации."
-  //   );
-  //   return;
-  // }
-  else {
+  } else {
     unsubscribeToTickerOnWs(ticker, toCurrency);
   }
 };
