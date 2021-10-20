@@ -23,15 +23,16 @@ var worker = new SharedWorker("scripts/worker.js");
 worker.port.addEventListener(
   "message",
   function (e) {
-    alert(e.data);
+    console.log("Shared worker return=>", e.data);
   },
   false
 );
 
 worker.port.start();
 
-// post a message to the shared web worker
-worker.port.postMessage("Alyssa");
+worker.port.postMessage({
+  URL: `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`,
+});
 
 // Обработчик событий WS
 socket.addEventListener("message", (e) => {
@@ -111,11 +112,17 @@ socket.addEventListener("message", (e) => {
 
 function sendToWs(message) {
   const stringifiedMessage = JSON.stringify(message);
+
+  // Посылвем сообщение на SharedWorker
+  worker.port.postMessage(stringifiedMessage);
+
+  // Если WS уже открыт, то шлём сообщение туда и завершаем функцию
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(stringifiedMessage);
     return;
   }
 
+  // Если WS закрыт, то отрываем его и уже тогдв шлём сообщение туда
   socket.addEventListener(
     "open",
     () => {
