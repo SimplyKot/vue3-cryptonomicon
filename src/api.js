@@ -18,6 +18,21 @@ const socket = new WebSocket(
   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
 );
 
+var worker = new SharedWorker("scripts/worker.js");
+
+worker.port.addEventListener(
+  "message",
+  function (e) {
+    alert(e.data);
+  },
+  false
+);
+
+worker.port.start();
+
+// post a message to the shared web worker
+worker.port.postMessage("Alyssa");
+
 // Обработчик событий WS
 socket.addEventListener("message", (e) => {
   //const subscribers = tickersHandlers.get(ticker) || [];
