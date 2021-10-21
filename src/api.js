@@ -14,19 +14,24 @@ var BTCusers = [];
 //  Актуальный курс BTC-USD
 var BTCUSDexchange = 0;
 
-const socket = new WebSocket(
-  `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
-);
+// const socket = new WebSocket(
+//   `wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
+// );
 
-var worker = new SharedWorker("scripts/worker.js");
+var worker;
 
-worker.port.addEventListener(
-  "message",
-  function (e) {
-    console.log("Shared worker return=>", e.data);
-  },
-  false
-);
+if (window.SharedWorker) {
+  console.log("SharedWorker allowed");
+  worker = new SharedWorker("scripts/worker.js");
+}
+
+// worker.port.addEventListener(
+//   "message",
+//   function (e) {
+//     console.log("Shared worker return=>", e.data);
+//   },
+//   false
+// );
 
 worker.port.start();
 
@@ -35,8 +40,10 @@ worker.port.postMessage({
 });
 
 // Обработчик событий WS
-socket.addEventListener("message", (e) => {
+worker.port.addEventListener("message", (e) => {
   //const subscribers = tickersHandlers.get(ticker) || [];
+
+  //console.log(e);
 
   var currency = "";
   var newPrice = "";
@@ -110,27 +117,32 @@ socket.addEventListener("message", (e) => {
   handlers.forEach((fn) => fn(newPrice, isExist));
 });
 
-function sendToWs(message) {
+function sendToWorker(message) {
   const stringifiedMessage = JSON.stringify(message);
-
-  // Посылвем сообщение на SharedWorker
   worker.port.postMessage(stringifiedMessage);
-
-  // Если WS уже открыт, то шлём сообщение туда и завершаем функцию
-  if (socket.readyState === WebSocket.OPEN) {
-    socket.send(stringifiedMessage);
-    return;
-  }
-
-  // Если WS закрыт, то отрываем его и уже тогдв шлём сообщение туда
-  socket.addEventListener(
-    "open",
-    () => {
-      socket.send(stringifiedMessage);
-    },
-    { once: true }
-  );
 }
+
+// function sendToWs(message) {
+//   const stringifiedMessage = JSON.stringify(message);
+
+//   // Посылвем сообщение на SharedWorker
+//   worker.port.postMessage(stringifiedMessage);
+
+//   // Если WS уже открыт, то шлём сообщение туда и завершаем функцию
+//   if (socket.readyState === WebSocket.OPEN) {
+//     socket.send(stringifiedMessage);
+//     return;
+//   }
+
+//   // Если WS закрыт, то отрываем его и уже тогдв шлём сообщение туда
+//   socket.addEventListener(
+//     "open",
+//     () => {
+//       socket.send(stringifiedMessage);
+//     },
+//     { once: true }
+//   );
+// }
 
 // Функция проверяет есть ли активая подписка на монетку
 function checkCoinInHandlers(currency) {
@@ -154,14 +166,14 @@ function getTickerNameFormMessage(parameter) {
 }
 
 function subscribeToTickerOnWs(ticker, toCurrency) {
-  sendToWs({
+  sendToWorker({
     action: "SubAdd",
     subs: [`5~CCCAGG~${ticker}~${toCurrency}`],
   });
 }
 
 function unsubscribeToTickerOnWs(ticker, toCurrency) {
-  sendToWs({
+  sendToWorker({
     action: "SubRemove",
     subs: [`5~CCCAGG~${ticker}~${toCurrency}`],
   });
