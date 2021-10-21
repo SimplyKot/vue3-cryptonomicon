@@ -1,7 +1,7 @@
 var URL = "";
 var socket = null;
 var connected = false;
-var port = null;
+var ports = [];
 
 function createSocket() {
   if (!connected) {
@@ -9,7 +9,7 @@ function createSocket() {
     connected = true;
     socket.addEventListener("message", (e) => {
       console.log(e);
-      port.postMessage(e.data);
+      ports.forEach((port) => port.postMessage(e.data));
       //port.postMessage(e.data);
     });
   }
@@ -37,7 +37,8 @@ function sentToWS(data) {
 self.addEventListener(
   "connect",
   (e) => {
-    port = e.ports[0];
+    const port = e.ports[0];
+    ports.push(port);
     console.log("ports =>", e.ports);
 
     // Анализируем пришедшее из основного потока сообщение и выполняем требуемые операции
