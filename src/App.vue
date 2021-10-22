@@ -333,8 +333,10 @@ export default {
     };
   },
   created: function () {
+    // Загружаем списоу доступных монет из обменника
     this.getTickers();
 
+    //Звгружаем все параметры из адресной строки
     const windowData = Object.fromEntries(
       new URL(window.location).searchParams.entries()
     );
@@ -347,6 +349,7 @@ export default {
       this.page = windowData.page;
     }
 
+    // Загружаем список подписок на монеты их localStorage
     const tickersData = localStorage.getItem("cryptonomicon-list");
 
     if (tickersData) {
@@ -470,6 +473,7 @@ export default {
       this.errorAdded = false;
       this.filter = "";
       this.ticker = "";
+
       subscribeToTicker(currentTicker.name, (newPrice, isExist) => {
         this.updateTicker(currentTicker.name, newPrice, isExist);
       });
